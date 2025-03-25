@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "55498200184",
+    "project_id": "ambulance-booking-system-01",
+    "storage_bucket": "ambulance-booking-system-01.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55498200184:android:9001a6beb3262f0f07898d",
+        "android_client_info": {
+          "package_name": "com.svcp.ambulancebookingsystem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtCisBDEktFKFMpyd9_B1N5jfLW-jgat4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
