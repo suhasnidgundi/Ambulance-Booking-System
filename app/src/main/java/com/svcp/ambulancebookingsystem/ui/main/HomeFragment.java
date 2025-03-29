@@ -29,25 +29,6 @@ public class HomeFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
-
-        // Add recent bookings logic
-        BookingViewModel bookingViewModel = new ViewModelProvider(requireActivity()).get(BookingViewModel.class);
-        bookingViewModel.getUserBookings().observe(getViewLifecycleOwner(), bookings -> {
-            if (bookings != null && !bookings.isEmpty()) {
-                binding.tvNoBookings.setVisibility(View.GONE);
-                binding.rvRecentBookings.setVisibility(View.VISIBLE);
-                // Setup RecyclerView adapter for recent bookings
-            } else {
-                binding.tvNoBookings.setVisibility(View.VISIBLE);
-                binding.rvRecentBookings.setVisibility(View.GONE);
-            }
-        });
-    }
-
-    @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;

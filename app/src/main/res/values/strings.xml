@@ -30,4 +30,16 @@
     <string name="default_web_client_id">
 55498200184-fq1qikbu0ik0kl1flp788jgf9oj3lpqt.apps.googleusercontent.com
     </string>
+
+    <string-array name="patient_conditions">
+        <item>Critical (Emergency)</item>
+        <item>Serious</item>
+        <item>Stable</item>
+        <item>Non-critical</item>
+        <item>COVID-19 related</item>
+        <item>Accident/Injury</item>
+        <item>Cardiac issue</item>
+        <item>Pregnancy/Labor</item>
+        <item>Other (specify in notes)</item>
+    </string-array>
 </resources>
