@@ -45,9 +45,9 @@
         <activity android:name=".ui.user.UserProfileActivity" />
 <!--        <activity android:name=".ui.user.EmergencyContactsActivity" />-->
 
-<!--        <service-->
-<!--            android:name=".service.LocationService"-->
-<!--            android:foregroundServiceType="location" />-->
+        <service
+            android:name=".service.LocationService"
+            android:foregroundServiceType="location" />
 
         <service
             android:name=".data.remote.FCMService"
