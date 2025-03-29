@@ -1,5 +1,7 @@
 package com.svcp.ambulancebookingsystem.ui.booking;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -148,10 +150,15 @@ public class BookingViewModel extends ViewModel {
 
         String userId = auth.getCurrentUser().getUid();
 
+        // Create a list of valid statuses (those that are not COMPLETED or CANCELLED)
+        List<String> activeStatuses = new ArrayList<>();
+        activeStatuses.add(Constants.STATUS_PENDING);
+        activeStatuses.add(Constants.STATUS_ACCEPTED);
+        activeStatuses.add(Constants.STATUS_IN_PROGRESS);
+
         db.collection(Constants.BOOKINGS_COLLECTION)
                 .whereEqualTo("userId", userId)
-                .whereNotEqualTo("status", Constants.STATUS_COMPLETED)
-                .whereNotEqualTo("status", Constants.STATUS_CANCELLED)
+                .whereIn("status", activeStatuses)  // Use whereIn instead of multiple whereNotEqualTo
                 .orderBy("bookingTime", Query.Direction.DESCENDING)
                 .limit(1)
                 .get()
@@ -164,6 +171,7 @@ public class BookingViewModel extends ViewModel {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    Log.e("BookingViewModel", "Error loading current booking: " + e.getMessage());
                     errorMessage.setValue("Failed to load current booking: " + e.getMessage());
                     currentBooking.setValue(null);
                 });

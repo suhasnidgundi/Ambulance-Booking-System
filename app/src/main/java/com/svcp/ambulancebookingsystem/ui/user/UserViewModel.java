@@ -6,8 +6,13 @@ import androidx.lifecycle.ViewModel;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.svcp.ambulancebookingsystem.data.model.EmergencyContact;
 import com.svcp.ambulancebookingsystem.data.model.User;
 import com.svcp.ambulancebookingsystem.utils.Constants;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class UserViewModel extends ViewModel {
     private final FirebaseFirestore db;
@@ -46,7 +51,21 @@ public class UserViewModel extends ViewModel {
         db.collection(Constants.USERS_COLLECTION)
                 .document(userId)
                 .set(updatedUser)
-                .addOnSuccessListener(aVoid -> userData.setValue(updatedUser))
+                .addOnSuccessListener(aVoid -> {
+                    loadUserData(); // Refresh user data
+                })
                 .addOnFailureListener(e -> errorMessage.setValue("Failed to update profile: " + e.getMessage()));
+    }
+    
+    public void updateUserEmergencyContacts(List<EmergencyContact> contacts) {
+        String userId = auth.getCurrentUser().getUid();
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("emergencyContacts", contacts);
+        
+        db.collection(Constants.USERS_COLLECTION)
+                .document(userId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> loadUserData())
+                .addOnFailureListener(e -> errorMessage.setValue("Failed to update emergency contacts: " + e.getMessage()));
     }
 }

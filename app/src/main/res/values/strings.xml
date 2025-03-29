@@ -42,4 +42,22 @@
         <item>Pregnancy/Labor</item>
         <item>Other (specify in notes)</item>
     </string-array>
+
+    <!-- Emergency Contacts -->
+    <string name="emergency_contacts">Emergency Contacts</string>
+    <string name="emergency_contacts_title">Emergency Contacts</string>
+    <string name="emergency_contacts_description">Add your emergency contacts here. These contacts will be available during emergencies for quick access.</string>
+    <string name="add_contact">Add Contact</string>
+    <string name="add_new_contact">Add New Contact</string>
+    <string name="cancel_add">Cancel</string>
+    <string name="contact_name">Contact Name</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="relation">Relation</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="call_contact">Call Contact</string>
+    <string name="delete_contact">Delete Contact</string>
+    <string name="all_fields_required">All fields are required</string>
+    <string name="contact_added_success">Contact added successfully</string>
+    <string name="contact_deleted">Contact deleted</string>
 </resources>
