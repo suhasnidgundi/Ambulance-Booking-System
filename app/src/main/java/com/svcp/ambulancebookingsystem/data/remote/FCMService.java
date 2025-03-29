@@ -27,7 +27,7 @@ public class FCMService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         // Handle incoming booking notification
-        if (remoteMessage.getData().size() > 0) {
+        if (!remoteMessage.getData().isEmpty()) {
             Map<String, String> data = remoteMessage.getData();
             String bookingId = data.get("bookingId");
             String pickupAddress = data.get("pickupAddress");

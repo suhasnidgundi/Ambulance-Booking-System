@@ -1,9 +1,7 @@
 package com.svcp.ambulancebookingsystem.data.remote;
 
-import android.util.Log;
-
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
 
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
@@ -14,150 +12,116 @@ import com.svcp.ambulancebookingsystem.data.model.User;
 import com.svcp.ambulancebookingsystem.utils.Constants;
 
 public class FirebaseAuthSource {
-    private static final String TAG = "FirebaseAuthSource";
-    private FirebaseAuth firebaseAuth;
-    private FirebaseFirestore firestore;
+    private FirebaseAuth auth;
+    private FirebaseFirestore db;
 
     public FirebaseAuthSource() {
-        this.firebaseAuth = FirebaseAuth.getInstance();
-        this.firestore = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
     }
 
-    public MutableLiveData<User> loginUser(String email, String password) {
-        MutableLiveData<User> userLiveData = new MutableLiveData<>();
+    public LiveData<User> loginUser(String email, String password) {
+        MutableLiveData<User> userMutableLiveData = new MutableLiveData<>();
 
-        firebaseAuth.signInWithEmailAndPassword(email, password)
+        auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null && task.getResult().getUser() != null) {
-                        String userId = task.getResult().getUser().getUid();
-
-                        firestore.collection(Constants.USERS_COLLECTION)
-                                .document(userId)
-                                .get()
-                                .addOnSuccessListener(documentSnapshot -> {
-                                    if (documentSnapshot.exists()) {
-                                        User user = documentSnapshot.toObject(User.class);
-                                        userLiveData.setValue(user);
-                                    } else {
-                                        // Create a basic user if not exists
-                                        FirebaseUser firebaseUser = task.getResult().getUser();
-                                        User newUser = new User(
-                                                userId,
-                                                firebaseUser.getDisplayName() != null ? firebaseUser.getDisplayName() : "User",
-                                                firebaseUser.getEmail(),
-                                                "",
-                                                ""
-                                        );
-
-                                        firestore.collection(Constants.USERS_COLLECTION)
-                                                .document(userId)
-                                                .set(newUser)
-                                                .addOnSuccessListener(aVoid -> userLiveData.setValue(newUser))
-                                                .addOnFailureListener(e -> {
-                                                    Log.e(TAG, "Error creating user document", e);
-                                                    userLiveData.setValue(null);
-                                                });
-                                    }
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Error getting user document", e);
-                                    userLiveData.setValue(null);
-                                });
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = auth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            fetchUserProfile(firebaseUser.getUid(), userMutableLiveData);
+                        }
                     } else {
-                        Log.e(TAG, "Login failed", task.getException());
-                        userLiveData.setValue(null);
+                        userMutableLiveData.setValue(null);
                     }
                 });
 
-        return userLiveData;
+        return userMutableLiveData;
     }
 
-    public MutableLiveData<User> registerUser(String name, String email, String password, String phone) {
-        MutableLiveData<User> userLiveData = new MutableLiveData<>();
+    public LiveData<User> registerUser(String name, String email, String password, String phone) {
+        MutableLiveData<User> userMutableLiveData = new MutableLiveData<>();
 
-        firebaseAuth.createUserWithEmailAndPassword(email, password)
+        auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null && task.getResult().getUser() != null) {
-                        String userId = task.getResult().getUser().getUid();
-
-                        User newUser = new User(userId, name, email, phone, "");
-
-                        firestore.collection(Constants.USERS_COLLECTION)
-                                .document(userId)
-                                .set(newUser)
-                                .addOnSuccessListener(aVoid -> userLiveData.setValue(newUser))
-                                .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Error creating user document", e);
-                                    userLiveData.setValue(null);
-                                });
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = auth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            createUserProfile(firebaseUser.getUid(), name, email, phone, userMutableLiveData);
+                        }
                     } else {
-                        Log.e(TAG, "Registration failed", task.getException());
-                        userLiveData.setValue(null);
+                        userMutableLiveData.setValue(null);
                     }
                 });
 
-        return userLiveData;
+        return userMutableLiveData;
     }
 
-    public MutableLiveData<User> googleSignIn(String idToken) {
-        MutableLiveData<User> userLiveData = new MutableLiveData<>();
+    public LiveData<User> googleSignIn(String idToken) {
+        MutableLiveData<User> userMutableLiveData = new MutableLiveData<>();
 
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        firebaseAuth.signInWithCredential(credential)
+        auth.signInWithCredential(credential)
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null && task.getResult().getUser() != null) {
-                        FirebaseUser firebaseUser = task.getResult().getUser();
-                        String userId = firebaseUser.getUid();
-
-                        firestore.collection(Constants.USERS_COLLECTION)
-                                .document(userId)
-                                .get()
-                                .addOnSuccessListener(documentSnapshot -> {
-                                    if (documentSnapshot.exists()) {
-                                        User user = documentSnapshot.toObject(User.class);
-                                        userLiveData.setValue(user);
-                                    } else {
-                                        // Create a new user
-                                        User newUser = new User(
-                                                userId,
-                                                firebaseUser.getDisplayName() != null ? firebaseUser.getDisplayName() : "User",
-                                                firebaseUser.getEmail(),
-                                                firebaseUser.getPhoneNumber() != null ? firebaseUser.getPhoneNumber() : "",
-                                                ""
-                                        );
-
-                                        firestore.collection(Constants.USERS_COLLECTION)
-                                                .document(userId)
-                                                .set(newUser)
-                                                .addOnSuccessListener(aVoid -> userLiveData.setValue(newUser))
-                                                .addOnFailureListener(e -> {
-                                                    Log.e(TAG, "Error creating user document", e);
-                                                    userLiveData.setValue(null);
-                                                });
-                                    }
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Error getting user document", e);
-                                    userLiveData.setValue(null);
-                                });
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = auth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            // Check if the user exists in Firestore
+                            db.collection(Constants.USERS_COLLECTION).document(firebaseUser.getUid())
+                                    .get()
+                                    .addOnSuccessListener(documentSnapshot -> {
+                                        if (documentSnapshot.exists()) {
+                                            User user = documentSnapshot.toObject(User.class);
+                                            userMutableLiveData.setValue(user);
+                                        } else {
+                                            // Create new user profile from Google account info
+                                            String name = firebaseUser.getDisplayName();
+                                            String email = firebaseUser.getEmail();
+                                            String phone = firebaseUser.getPhoneNumber() != null ?
+                                                    firebaseUser.getPhoneNumber() : "";
+                                            createUserProfile(firebaseUser.getUid(), name, email, phone, userMutableLiveData);
+                                        }
+                                    })
+                                    .addOnFailureListener(e -> userMutableLiveData.setValue(null));
+                        }
                     } else {
-                        Log.e(TAG, "Google sign-in failed", task.getException());
-                        userLiveData.setValue(null);
+                        userMutableLiveData.setValue(null);
                     }
                 });
 
-        return userLiveData;
+        return userMutableLiveData;
+    }
+
+    private void createUserProfile(String userId, String name, String email, String phone, MutableLiveData<User> userMutableLiveData) {
+        User user = new User(userId, name, email, phone, "");
+        db.collection(Constants.USERS_COLLECTION).document(userId)
+                .set(user)
+                .addOnSuccessListener(aVoid -> userMutableLiveData.setValue(user))
+                .addOnFailureListener(e -> userMutableLiveData.setValue(null));
+    }
+
+    private void fetchUserProfile(String userId, MutableLiveData<User> userMutableLiveData) {
+        db.collection(Constants.USERS_COLLECTION).document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        User user = documentSnapshot.toObject(User.class);
+                        userMutableLiveData.setValue(user);
+                    } else {
+                        userMutableLiveData.setValue(null);
+                    }
+                })
+                .addOnFailureListener(e -> userMutableLiveData.setValue(null));
     }
 
     public void logout() {
-        firebaseAuth.signOut();
+        auth.signOut();
     }
 
     public FirebaseUser getCurrentUser() {
-        return firebaseAuth.getCurrentUser();
+        return auth.getCurrentUser();
     }
 
     public boolean isUserLoggedIn() {
-        return firebaseAuth.getCurrentUser() != null;
+        return auth.getCurrentUser() != null;
     }
 }

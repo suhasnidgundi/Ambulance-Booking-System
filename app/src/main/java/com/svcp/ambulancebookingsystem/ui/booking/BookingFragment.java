@@ -37,11 +37,6 @@ public class BookingFragment extends Fragment {
         String patientName = "John Doe";
         String patientCondition = "Critical";
 
-        bookingViewModel.createBooking(pickupLocation, pickupAddress, destinationLocation, destinationAddress, patientName, patientCondition)
-                .observe(getViewLifecycleOwner(), booking -> {
-                    if (booking != null) {
-                        binding.txtBookingStatus.setText("Booking Confirmed!");
-                    }
-                });
+
     }
 }
