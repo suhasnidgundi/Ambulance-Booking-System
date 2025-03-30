@@ -45,7 +45,7 @@
         <activity android:name=".ui.auth.RegisterActivity" />
         <activity android:name=".ui.booking.BookingActivity" />
 <!--        <activity android:name=".ui.tracking.TrackingActivity" />-->
-<!--        <activity android:name=".ui.admin.AdminDashboardActivity" />-->
+        <activity android:name=".ui.admin.AdminDashboardActivity" />
         <activity android:name=".ui.user.UserProfileActivity" />
         <activity android:name=".ui.user.EmergencyContactsActivity" />
 
