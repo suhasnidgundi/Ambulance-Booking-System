@@ -1,6 +1,7 @@
 package com.svcp.ambulancebookingsystem.ui.admin;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
@@ -8,110 +9,151 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.svcp.ambulancebookingsystem.utils.Constants;
+import com.svcp.ambulancebookingsystem.data.model.*;
+import com.svcp.ambulancebookingsystem.data.repository.AdminRepository;
 
-import static android.content.Context.MODE_PRIVATE;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AdminViewModel extends AndroidViewModel {
-    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private final SharedPreferences preferences;
+    // SharedPreferences constants
+    public static final String PREF_NAME = "AdminPreferences";
+    public static final String PREF_ADMIN_ID = "admin_id";
+    public static final String PREF_ADMIN_NAME = "admin_name";
+    public static final String PREF_ADMIN_EMAIL = "admin_email";
+
+    private final AdminRepository adminRepository;
+    private final SharedPreferences sharedPreferences;
+    private final MutableLiveData<DashboardSummary> dashboardSummaryLiveData = new MutableLiveData<>();
+    private final MutableLiveData<List<Booking>> recentBookingsLiveData = new MutableLiveData<>();
 
     public AdminViewModel(@NonNull Application application) {
         super(application);
-        preferences = application.getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
+        adminRepository = new AdminRepository();
+        sharedPreferences = application.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        recentBookingsLiveData.setValue(new ArrayList<>()); // Initialize with empty list
     }
 
-    public boolean isAdminLoggedIn() {
-        String adminId = preferences.getString(Constants.PREF_ADMIN_ID, "");
-        return !adminId.isEmpty();
+    public void login(String email, String password, AdminLoginCallback callback) {
+        adminRepository.login(email, password, new AdminRepository.LoginCallback() {
+            @Override
+            public void onSuccess(Admin admin) {
+                saveAdminSession(admin);
+                callback.onSuccess();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                callback.onFailure(message);
+            }
+        });
     }
 
-    public String getAdminId() {
-        return preferences.getString(Constants.PREF_ADMIN_ID, "");
-    }
-
-    public LiveData<Admin> getAdminData(String adminId) {
-        MutableLiveData<Admin> adminLiveData = new MutableLiveData<>();
-
-        db.collection("admins")
-                .document(adminId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    Admin admin = documentSnapshot.toObject(Admin.class);
-                    adminLiveData.setValue(admin);
-                })
-                .addOnFailureListener(e -> adminLiveData.setValue(null));
-
-        return adminLiveData;
-    }
-
-    public void logoutAdmin() {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.remove(Constants.PREF_ADMIN_ID);
-        editor.remove(Constants.PREF_ADMIN_EMAIL);
+    public void logout() {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
         editor.apply();
     }
 
-    public LiveData<Integer> getTotalUsersCount() {
-        MutableLiveData<Integer> countLiveData = new MutableLiveData<>();
-
-        db.collection("users")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots ->
-                        countLiveData.setValue(queryDocumentSnapshots.size()))
-                .addOnFailureListener(e -> countLiveData.setValue(0));
-
-        return countLiveData;
+    private void saveAdminSession(Admin admin) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(PREF_ADMIN_ID, admin.getId());
+        editor.putString(PREF_ADMIN_NAME, admin.getName());
+        editor.putString(PREF_ADMIN_EMAIL, admin.getEmail());
+        editor.apply();
     }
 
-    public LiveData<Integer> getTotalDriversCount() {
-        MutableLiveData<Integer> countLiveData = new MutableLiveData<>();
-
-        db.collection("drivers")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots ->
-                        countLiveData.setValue(queryDocumentSnapshots.size()))
-                .addOnFailureListener(e -> countLiveData.setValue(0));
-
-        return countLiveData;
+    public boolean isLoggedIn() {
+        return sharedPreferences.getString(PREF_ADMIN_ID, null) != null;
     }
 
-    public LiveData<Integer> getTotalAmbulancesCount() {
-        MutableLiveData<Integer> countLiveData = new MutableLiveData<>();
-
-        db.collection("ambulances")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots ->
-                        countLiveData.setValue(queryDocumentSnapshots.size()))
-                .addOnFailureListener(e -> countLiveData.setValue(0));
-
-        return countLiveData;
+    public String getId() {
+        return sharedPreferences.getString(PREF_ADMIN_ID, "");
     }
 
-    public LiveData<Integer> getTotalBookingsCount() {
-        MutableLiveData<Integer> countLiveData = new MutableLiveData<>();
-
-        db.collection("bookings")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots ->
-                        countLiveData.setValue(queryDocumentSnapshots.size()))
-                .addOnFailureListener(e -> countLiveData.setValue(0));
-
-        return countLiveData;
+    public String getName() {
+        return sharedPreferences.getString(PREF_ADMIN_NAME, "");
     }
 
-    public LiveData<Integer> getPendingBookingsCount() {
-        MutableLiveData<Integer> countLiveData = new MutableLiveData<>();
+    public String getEmail() {
+        return sharedPreferences.getString(PREF_ADMIN_EMAIL, "");
+    }
 
-        db.collection("bookings")
-                .whereEqualTo("status", "pending")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots ->
-                        countLiveData.setValue(queryDocumentSnapshots.size()))
-                .addOnFailureListener(e -> countLiveData.setValue(0));
+    public void getDashboardSummary() {
+        adminRepository.getDashboardSummary(new AdminRepository.DashboardSummaryCallback() {
+            @Override
+            public void onSuccess(DashboardSummary dashboardSummary) {
+                dashboardSummaryLiveData.postValue(dashboardSummary);
 
-        return countLiveData;
+                // Fetch recent bookings
+                fetchRecentBookings();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                // Handle error
+            }
+        });
+    }
+
+    private void fetchRecentBookings() {
+        adminRepository.getRecentBookings(5, new AdminRepository.BookingsCallback() {
+            @Override
+            public void onSuccess(List<Booking> bookings) {
+                recentBookingsLiveData.postValue(bookings);
+            }
+
+            @Override
+            public void onFailure(String message) {
+                // Handle error
+            }
+        });
+    }
+
+    public LiveData<DashboardSummary> getDashboardSummaryData() {
+        return dashboardSummaryLiveData;
+    }
+
+    public LiveData<List<Booking>> getRecentBookingsData() {
+        return recentBookingsLiveData;
+    }
+
+    public List<Booking> getRecentBookings() {
+        return recentBookingsLiveData.getValue();
+    }
+
+    public int getActiveBookings() {
+        DashboardSummary summary = dashboardSummaryLiveData.getValue();
+        return summary != null ? summary.getActiveBookings() : 0;
+    }
+
+    public int getTotalBookings() {
+        DashboardSummary summary = dashboardSummaryLiveData.getValue();
+        return summary != null ? summary.getTotalBookings() : 0;
+    }
+
+    public int getTotalAmbulances() {
+        DashboardSummary summary = dashboardSummaryLiveData.getValue();
+        return summary != null ? summary.getTotalAmbulances() : 0;
+    }
+
+    public int getTotalDrivers() {
+        DashboardSummary summary = dashboardSummaryLiveData.getValue();
+        return summary != null ? summary.getTotalDrivers() : 0;
+    }
+
+    public int getTotalUsers() {
+        DashboardSummary summary = dashboardSummaryLiveData.getValue();
+        return summary != null ? summary.getTotalUsers() : 0;
+    }
+
+    public double getTotalRevenue() {
+        DashboardSummary summary = dashboardSummaryLiveData.getValue();
+        return summary != null ? summary.getTotalRevenue() : 0.0;
+    }
+
+    public interface AdminLoginCallback {
+        void onSuccess();
+        void onFailure(String message);
     }
 }

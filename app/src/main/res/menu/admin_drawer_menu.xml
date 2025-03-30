@@ -1,4 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
 
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_dashboard"
+            android:icon="@drawable/ic_dashboard"
+            android:title="Dashboard" />
+        <item
+            android:id="@+id/nav_manage_users"
+            android:icon="@drawable/ic_users"
+            android:title="Manage Users" />
+        <item
+            android:id="@+id/nav_manage_drivers"
+            android:icon="@drawable/ic_drivers"
+            android:title="Manage Drivers" />
+        <item
+            android:id="@+id/nav_manage_ambulances"
+            android:icon="@drawable/ic_ambulance"
+            android:title="Manage Ambulances" />
+        <item
+            android:id="@+id/nav_manage_bookings"
+            android:icon="@drawable/ic_bookings"
+            android:title="Manage Bookings" />
+        <item
+            android:id="@+id/nav_reports"
+            android:icon="@drawable/ic_reports"
+            android:title="Reports" />
+    </group>
+
+    <item android:title="Account">
+        <menu>
+            <item
+                android:id="@+id/nav_profile"
+                android:icon="@drawable/ic_profile"
+                android:title="Profile" />
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_logout"
+                android:title="Logout" />
+        </menu>
+    </item>
 </menu>

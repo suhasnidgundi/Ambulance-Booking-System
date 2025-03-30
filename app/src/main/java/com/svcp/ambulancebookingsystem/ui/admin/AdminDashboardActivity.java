@@ -1,153 +1,204 @@
 package com.svcp.ambulancebookingsystem.ui.admin;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.navigation.NavigationView;
 import com.svcp.ambulancebookingsystem.R;
-import com.svcp.ambulancebookingsystem.databinding.ActivityAdminDashboardBinding;
-import com.svcp.ambulancebookingsystem.databinding.NavHeaderAdminBinding;
-import com.svcp.ambulancebookingsystem.ui.admin.ambulances.ManageAmbulancesActivity;
-import com.svcp.ambulancebookingsystem.ui.admin.bookings.AdminBookingsActivity;
-import com.svcp.ambulancebookingsystem.ui.admin.drivers.ManageDriversActivity;
-import com.svcp.ambulancebookingsystem.ui.admin.reports.AdminReportsActivity;
-import com.svcp.ambulancebookingsystem.ui.admin.users.ManageUsersActivity;
+import com.google.android.material.navigation.NavigationView;
 import com.svcp.ambulancebookingsystem.ui.auth.LoginActivity;
-import com.svcp.ambulancebookingsystem.utils.Constants;
 
 public class AdminDashboardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
-    private ActivityAdminDashboardBinding binding;
-    private NavHeaderAdminBinding headerBinding;
-    private AdminViewModel viewModel;
-    private ActionBarDrawerToggle drawerToggle;
+
+    private AdminViewModel adminViewModel;
+    private DrawerLayout drawerLayout;
+    private TextView tvActiveBookings, tvTotalBookings, tvTotalAmbulances, tvTotalDrivers, tvTotalUsers, tvTotalRevenue;
+    private RecyclerView rvRecentBookings;
+    private TextView tvNoBookings;
+    private Button btnViewAllBookings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityAdminDashboardBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_admin_dashboard);
 
-        viewModel = new ViewModelProvider(this).get(AdminViewModel.class);
+        // Initialize ViewModel
+        adminViewModel = new ViewModelProvider(this).get(AdminViewModel.class);
 
-        setupNavigationDrawer();
-        setupDashboardCards();
-        getAdminInfo();
+        // Setup toolbar and drawer
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        drawerLayout = findViewById(R.id.drawer_layout);
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        // Set admin info in nav header
+        View headerView = navigationView.getHeaderView(0);
+        TextView tvAdminName = headerView.findViewById(R.id.tvAdminName);
+        TextView tvAdminEmail = headerView.findViewById(R.id.tvAdminEmail);
+        tvAdminName.setText(adminViewModel.getName());
+        tvAdminEmail.setText(adminViewModel.getEmail());
+
+        // Initialize dashboard statistics views - Updated to match IDs in the XML layout
+        tvActiveBookings = findViewById(R.id.tv_active_bookings);
+        tvTotalBookings = findViewById(R.id.tv_total_bookings);
+        tvTotalAmbulances = findViewById(R.id.tv_total_ambulances);
+        tvTotalDrivers = findViewById(R.id.tv_total_drivers);
+        tvTotalUsers = findViewById(R.id.tv_total_users);
+        tvTotalRevenue = findViewById(R.id.tv_total_revenue);
+
+        // Initialize RecyclerView for recent bookings
+        rvRecentBookings = findViewById(R.id.rv_recent_bookings);
+        tvNoBookings = findViewById(R.id.tv_no_bookings);
+        btnViewAllBookings = findViewById(R.id.btn_view_all_bookings);
+
+        // Setup RecyclerView
+        setupRecentBookingsRecyclerView();
+
+        // Setup ViewAll button
+        btnViewAllBookings.setOnClickListener(v -> navigateToManageBookings());
+
+        // Load dashboard data
+        loadDashboardData();
     }
 
-    private void setupNavigationDrawer() {
-        setSupportActionBar(binding.toolbar);
-        drawerToggle = new ActionBarDrawerToggle(
-                this, binding.drawerLayout, binding.toolbar,
-                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        binding.drawerLayout.addDrawerListener(drawerToggle);
-        drawerToggle.syncState();
-
-        binding.navView.setNavigationItemSelectedListener(this);
-
-        // Setup header view
-        headerBinding = NavHeaderAdminBinding.bind(binding.navView.getHeaderView(0));
+    private void setupRecentBookingsRecyclerView() {
+        rvRecentBookings.setLayoutManager(new LinearLayoutManager(this));
+        // You would typically set an adapter here
+        // RecentBookingsAdapter adapter = new RecentBookingsAdapter(this);
+        // rvRecentBookings.setAdapter(adapter);
     }
 
-    private void setupDashboardCards() {
-        // Setup click listeners for dashboard cards
-        binding.cardManageUsers.setOnClickListener(v -> {
-            startActivity(new Intent(this, ManageUsersActivity.class));
-        });
+    private void loadDashboardData() {
+        // Show loading indicators
+        showLoading(true);
 
-        binding.cardManageDrivers.setOnClickListener(v -> {
-            startActivity(new Intent(this, ManageDriversActivity.class));
-        });
+        // Fetch dashboard summary
+        adminViewModel.getDashboardSummary();
 
-        binding.cardManageAmbulances.setOnClickListener(v -> {
-            startActivity(new Intent(this, ManageAmbulancesActivity.class));
-        });
-
-        binding.cardManageBookings.setOnClickListener(v -> {
-            startActivity(new Intent(this, AdminBookingsActivity.class));
-        });
-
-        binding.cardReports.setOnClickListener(v -> {
-            startActivity(new Intent(this, AdminReportsActivity.class));
-        });
-    }
-
-    private void getAdminInfo() {
-        SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
-        String adminId = prefs.getString(Constants.PREF_USER_ID, "");
-        String adminEmail = prefs.getString(Constants.PREF_USER_EMAIL, "");
-
-        if (adminId.isEmpty()) {
-            // Admin not logged in, go to login screen
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-            return;
-        }
-
-        // Load admin data from Firestore
-        viewModel.getAdminData(adminId).observe(this, admin -> {
-            if (admin != null) {
-                headerBinding.tvAdminName.setText(admin.getName());
-                headerBinding.tvAdminEmail.setText(admin.getEmail());
-
-                // Update dashboard summary info
-                viewModel.getDashboardSummary().observe(this, summary -> {
-                    if (summary != null) {
-                        binding.tvTotalUsers.setText(String.valueOf(summary.getTotalUsers()));
-                        binding.tvTotalDrivers.setText(String.valueOf(summary.getTotalDrivers()));
-                        binding.tvTotalAmbulances.setText(String.valueOf(summary.getTotalAmbulances()));
-                        binding.tvTotalBookings.setText(String.valueOf(summary.getTotalBookings()));
-                        binding.tvActiveBookings.setText(String.valueOf(summary.getActiveBookings()));
-                    }
-                });
+        // Observe dashboard data changes
+        adminViewModel.getDashboardSummaryData().observe(this, dashboardSummary -> {
+            if (dashboardSummary != null) {
+                updateDashboardUI();
+                updateRecentBookings();
+                showLoading(false);
             }
         });
     }
 
+    private void updateDashboardUI() {
+        tvActiveBookings.setText(String.valueOf(adminViewModel.getActiveBookings()));
+        tvTotalBookings.setText(String.valueOf(adminViewModel.getTotalBookings()));
+        tvTotalAmbulances.setText(String.valueOf(adminViewModel.getTotalAmbulances()));
+        tvTotalDrivers.setText(String.valueOf(adminViewModel.getTotalDrivers()));
+        tvTotalUsers.setText(String.valueOf(adminViewModel.getTotalUsers()));
+        // Set total revenue
+        tvTotalRevenue.setText("₹" + adminViewModel.getTotalRevenue());
+    }
+
+    private void updateRecentBookings() {
+        // Check if recent bookings are available
+        if (adminViewModel.getRecentBookings() != null && !adminViewModel.getRecentBookings().isEmpty()) {
+            rvRecentBookings.setVisibility(View.VISIBLE);
+            tvNoBookings.setVisibility(View.GONE);
+
+            // Update your RecyclerView adapter here
+            // adapter.setBookings(adminViewModel.getRecentBookings());
+        } else {
+            rvRecentBookings.setVisibility(View.GONE);
+            tvNoBookings.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showLoading(boolean isLoading) {
+        // Since there's no progressBar in the XML layout, we might need to add one
+        // or implement a different loading indicator
+    }
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        // Handle navigation item clicks
         int id = item.getItemId();
 
         if (id == R.id.nav_dashboard) {
-            // Already on dashboard, do nothing
+            // Already on dashboard
         } else if (id == R.id.nav_manage_users) {
-            startActivity(new Intent(this, ManageUsersActivity.class));
+            navigateToManageUsers();
         } else if (id == R.id.nav_manage_drivers) {
-            startActivity(new Intent(this, ManageDriversActivity.class));
+            navigateToManageDrivers();
         } else if (id == R.id.nav_manage_ambulances) {
-            startActivity(new Intent(this, ManageAmbulancesActivity.class));
+            navigateToManageAmbulances();
         } else if (id == R.id.nav_manage_bookings) {
-            startActivity(new Intent(this, AdminBookingsActivity.class));
+            navigateToManageBookings();
         } else if (id == R.id.nav_reports) {
-            startActivity(new Intent(this, AdminReportsActivity.class));
+            navigateToReports();
+        } else if (id == R.id.nav_profile) {
+            navigateToProfile();
         } else if (id == R.id.nav_logout) {
-            logoutAdmin();
+            logout();
         }
 
-        binding.drawerLayout.closeDrawer(GravityCompat.START);
+        drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    private void logoutAdmin() {
-        viewModel.logout();
+    private void navigateToManageUsers() {
+        // Intent intent = new Intent(this, ManageUsersActivity.class);
+        // startActivity(intent);
+        Toast.makeText(this, "Navigate to Manage Users", Toast.LENGTH_SHORT).show();
+    }
 
-        // Clear shared preferences
-        SharedPreferences.Editor editor = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE).edit();
-        editor.clear();
-        editor.apply();
+    private void navigateToManageDrivers() {
+        // Intent intent = new Intent(this, ManageDriversActivity.class);
+        // startActivity(intent);
+        Toast.makeText(this, "Navigate to Manage Drivers", Toast.LENGTH_SHORT).show();
+    }
 
-        // Go to login screen
+    private void navigateToManageAmbulances() {
+        // Intent intent = new Intent(this, ManageAmbulancesActivity.class);
+        // startActivity(intent);
+        Toast.makeText(this, "Navigate to Manage Ambulances", Toast.LENGTH_SHORT).show();
+    }
+
+    private void navigateToManageBookings() {
+        // Intent intent = new Intent(this, ManageBookingsActivity.class);
+        // startActivity(intent);
+        Toast.makeText(this, "Navigate to Manage Bookings", Toast.LENGTH_SHORT).show();
+    }
+
+    private void navigateToReports() {
+        // Intent intent = new Intent(this, ReportsActivity.class);
+        // startActivity(intent);
+        Toast.makeText(this, "Navigate to Reports", Toast.LENGTH_SHORT).show();
+    }
+
+    private void navigateToProfile() {
+        // Intent intent = new Intent(this, AdminProfileActivity.class);
+        // startActivity(intent);
+        Toast.makeText(this, "Navigate to Profile", Toast.LENGTH_SHORT).show();
+    }
+
+    private void logout() {
+        adminViewModel.logout();
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
@@ -156,8 +207,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
 
     @Override
     public void onBackPressed() {
-        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            binding.drawerLayout.closeDrawer(GravityCompat.START);
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
         }
