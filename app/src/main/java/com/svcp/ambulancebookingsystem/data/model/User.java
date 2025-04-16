@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class User {
+
+    private String id;
+    private String profileImageUrl;
+    private boolean active;
     private String userId;
     private String name;
     private String email;
@@ -104,5 +108,29 @@ public class User {
             this.bookingHistory = new ArrayList<>();
         }
         this.bookingHistory.add(bookingId);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
