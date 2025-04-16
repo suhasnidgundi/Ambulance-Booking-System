@@ -49,6 +49,18 @@
         <activity android:name=".ui.user.UserProfileActivity" />
         <activity android:name=".ui.user.EmergencyContactsActivity" />
 
+        <activity
+            android:name=".ui.admin.users.ManageUsersActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.admin.profile.AdminProfileActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.admin.bookings.ManageBookingsActivity"
+            android:exported="false" />
+
         <service
             android:name=".service.LocationService"
             android:foregroundServiceType="location" />

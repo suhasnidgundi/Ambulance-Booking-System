@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.svcp.ambulancebookingsystem.data.model.*;
 import com.svcp.ambulancebookingsystem.data.repository.AdminRepository;
 
@@ -50,9 +51,13 @@ public class AdminViewModel extends AndroidViewModel {
     }
 
     public void logout() {
+        // Clear shared preferences
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.clear();
         editor.apply();
+
+        // Sign out from Firebase Auth
+        FirebaseAuth.getInstance().signOut();
     }
 
     private void saveAdminSession(Admin admin) {

@@ -20,6 +20,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.svcp.ambulancebookingsystem.R;
 import com.google.android.material.navigation.NavigationView;
+import com.svcp.ambulancebookingsystem.ui.admin.bookings.ManageBookingsActivity;
+import com.svcp.ambulancebookingsystem.ui.admin.profile.AdminProfileActivity;
+import com.svcp.ambulancebookingsystem.ui.admin.users.ManageUsersActivity;
 import com.svcp.ambulancebookingsystem.ui.auth.LoginActivity;
 
 public class AdminDashboardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -162,9 +165,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
     }
 
     private void navigateToManageUsers() {
-        // Intent intent = new Intent(this, ManageUsersActivity.class);
-        // startActivity(intent);
-        Toast.makeText(this, "Navigate to Manage Users", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, ManageUsersActivity.class);
+        startActivity(intent);
     }
 
     private void navigateToManageDrivers() {
@@ -180,9 +182,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
     }
 
     private void navigateToManageBookings() {
-        // Intent intent = new Intent(this, ManageBookingsActivity.class);
-        // startActivity(intent);
-        Toast.makeText(this, "Navigate to Manage Bookings", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, ManageBookingsActivity.class);
+        startActivity(intent);
     }
 
     private void navigateToReports() {
@@ -192,9 +193,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
     }
 
     private void navigateToProfile() {
-        // Intent intent = new Intent(this, AdminProfileActivity.class);
-        // startActivity(intent);
-        Toast.makeText(this, "Navigate to Profile", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, AdminProfileActivity.class);
+        startActivity(intent);
     }
 
     private void logout() {
