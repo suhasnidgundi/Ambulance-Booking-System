@@ -1,7 +1,11 @@
 package com.svcp.ambulancebookingsystem.data.repository;
 
 import com.svcp.ambulancebookingsystem.data.model.Admin;
+import com.svcp.ambulancebookingsystem.data.model.Booking;
 import com.svcp.ambulancebookingsystem.data.model.DashboardSummary;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // You might be using Firebase, but this is a generic implementation
 // Replace with your actual API calls
@@ -72,12 +76,16 @@ public class AdminRepository {
                                             .addOnSuccessListener(usersSnapshot -> {
                                                 int totalUsers = usersSnapshot.size();
                                                 
+                                                // Add calculation for total revenue
+                                                double totalRevenue = calculateTotalRevenue();
+                                                
                                                 DashboardSummary summary = new DashboardSummary(
                                                     activeBookings,
                                                     totalBookings,
                                                     totalAmbulances,
                                                     totalDrivers,
-                                                    totalUsers
+                                                    totalUsers,
+                                                    totalRevenue
                                                 );
                                                 
                                                 callback.onSuccess(summary);
@@ -94,8 +102,35 @@ public class AdminRepository {
         */
         
         // For mock implementation:
-        DashboardSummary mockSummary = new DashboardSummary(5, 25, 10, 8, 30);
+        DashboardSummary mockSummary = new DashboardSummary(5, 25, 10, 8, 30, 15000.0);
         callback.onSuccess(mockSummary);
+    }
+    
+    // Added missing getRecentBookings method
+    public void getRecentBookings(int limit, BookingsCallback callback) {
+        // Implement your recent bookings fetching logic
+        // For example:
+        /*
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("bookings")
+            .orderBy("bookingTime", Query.Direction.DESCENDING)
+            .limit(limit)
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                List<Booking> bookings = new ArrayList<>();
+                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                    Booking booking = document.toObject(Booking.class);
+                    bookings.add(booking);
+                }
+                callback.onSuccess(bookings);
+            })
+            .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        */
+        
+        // For mock implementation:
+        List<Booking> mockBookings = new ArrayList<>();
+        // Add mock bookings
+        callback.onSuccess(mockBookings);
     }
 
     public interface LoginCallback {
@@ -105,6 +140,12 @@ public class AdminRepository {
 
     public interface DashboardSummaryCallback {
         void onSuccess(DashboardSummary dashboardSummary);
+        void onFailure(String message);
+    }
+    
+    // Added missing BookingsCallback interface
+    public interface BookingsCallback {
+        void onSuccess(List<Booking> bookings);
         void onFailure(String message);
     }
 }

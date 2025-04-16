@@ -48,6 +48,7 @@ dependencies {
     // Material Design
     implementation(libs.material)
     implementation(libs.activity)
+    implementation(libs.swiperefreshlayout)
 
     // Firebase
     implementation(platform(libs.firebase.bom))
